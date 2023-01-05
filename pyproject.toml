@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "genart"
+version = "0.1.0"
+description = "All things generative art."
+authors = ["Douglas Harvey <46091998+douglas-m-harvey@users.noreply.github.com>"]
+license = "GNU General Public License v3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.24.1"
+matplotlib = "^3.6.2"
+notebook = "^6.5.2"
+pyyaml = "^6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

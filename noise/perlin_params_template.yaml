@@ -1,0 +1,6 @@
+grid_y: 4
+grid_x: 4
+image_y: 128
+image_x: 128
+tile_y: True
+tile_x: True

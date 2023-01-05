@@ -1,3 +1,19 @@
+# Parameter files
+*params.yaml
+
+# Poetry files
+poetry.lock
+
+# VSCode files
+.vscode/
+
+# Sketch notebooks
+*sketch.ipynb
+
+
+###
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
