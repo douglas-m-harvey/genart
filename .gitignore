@@ -1,3 +1,6 @@
+# Data folder
+data/
+
 # Parameter files
 *params.yaml
 

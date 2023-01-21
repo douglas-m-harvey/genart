@@ -4,12 +4,13 @@ import argparse
 import yaml
 import numpy as np
 import numpy.random as rn
+import cupy as cp
 import matplotlib.pyplot as plt
 
 
 
 def unit_vector(angle):
-    return np.array([np.sin(angle), np.cos(angle)])
+    return cp.array([cp.sin(angle), cp.cos(angle)])
 
 
 def smoothstep(x):
@@ -17,42 +18,51 @@ def smoothstep(x):
 
 
 def perlin_noise(shape_grid, shape_image, seed = None, tile = (True, True), warp = None):
-    rn.seed(seed)
+    cp.get_default_memory_pool().free_all_blocks()
     
-    shape_grid = np.array(shape_grid)
-    shape_image = np.array(shape_image)
+    cp.random.seed(seed)
+    
+    shape_grid = cp.array(shape_grid)
+    shape_image = cp.array(shape_image)
     
     # Define a grid of random unit vectors, with equal edge vectors so image can be tiled.
-    vectors = unit_vector(rn.uniform(0, 2*np.pi, shape_grid + 1))
+    vectors = unit_vector(cp.random.uniform(0, 2*cp.pi, (int(shape_grid[0] + 1),
+                                                         int(shape_grid[1] + 1))))
     if tile[0]: vectors[:, -1, :] = vectors[:, 0, :]
     if tile[1]: vectors[:, :, -1] = vectors[:, :, 0]
     
     # Define a grid of sample points.
-    points = np.array(np.meshgrid(np.linspace(0, shape_grid[1], shape_image[1]),
-                                  np.linspace(0, shape_grid[0], shape_image[0])))
+    points = cp.array(cp.meshgrid(cp.linspace(0, int(shape_grid[1]), int(shape_image[1])),
+                                  cp.linspace(0, int(shape_grid[0]), int(shape_image[0]))))
     if warp is not None:
-        points += warp
-        # Could use np.apply_along_axis here 
+        points += cp.array(warp)
+        # Could use cp.apply_along_axis here 
         points[0] %= shape_grid[1]
         points[1] %= shape_grid[0]
+        
+        warp = None
     
     # For each sample point, find the top, bottom, left and right edges of its cell.
     # Format: [shape_image]
-    t = np.floor(points[0]).astype(int)
-    b = np.ceil(points[0]).astype(int)
-    l = np.floor(points[1]).astype(int)
-    r = np.ceil(points[1]).astype(int)
+    t = cp.floor(points[0]).astype(int)
+    b = cp.ceil(points[0]).astype(int)
+    l = cp.floor(points[1]).astype(int)
+    r = cp.ceil(points[1]).astype(int)
     
     # For each sample point, find the gradient vectors of its cell.
     # Format: [2, *shape_image]
-    gv_tl = np.array([vectors[0][l, t], vectors[1][l, t]])
-    gv_tr = np.array([vectors[0][r, t], vectors[1][r, t]])
-    gv_bl = np.array([vectors[0][l, b], vectors[1][l, b]])
-    gv_br = np.array([vectors[0][r, b], vectors[1][r, b]])
+    gv_tl = cp.array([vectors[0][l, t], vectors[1][l, t]])
+    gv_tr = cp.array([vectors[0][r, t], vectors[1][r, t]])
+    gv_bl = cp.array([vectors[0][l, b], vectors[1][l, b]])
+    gv_br = cp.array([vectors[0][r, b], vectors[1][r, b]])
+    
+    vectors = None
 
     # Define an array containing gradient vectors for every point.
     # Format: [4, 2, *shape_image]
-    gv = np.array([gv_tl, gv_tr, gv_bl, gv_br])
+    gv = cp.array([gv_tl, gv_tr, gv_bl, gv_br])
+    
+    gv_tl, gv_tr, gv_bl, gv_br = None, None, None, None
     
     # For each sample point, calculate the distances to the corners of its cell.
     # Format: [shape_image]
@@ -63,24 +73,41 @@ def perlin_noise(shape_grid, shape_image, seed = None, tile = (True, True), warp
     
     # Define the distance vectors of each point.
     # Format: [2, *shape_image]
-    dv_tl = np.array([d_t, d_l])
-    dv_tr = np.array([d_t, d_r])
-    dv_bl = np.array([d_b, d_l])
-    dv_br = np.array([d_b, d_r])
+    dv_tl = cp.array([d_t, d_l])
+    dv_tr = cp.array([d_t, d_r])
+    dv_bl = cp.array([d_b, d_l])
+    dv_br = cp.array([d_b, d_r])
+    
+    d_t, d_b, d_l, d_r = None, None, None, None
 
     # Define an array containing distance vectors for every point.
     # Format: [4, 2, *shape_image]
-    dv = np.array([dv_tl, dv_tr, dv_bl, dv_br])
+    dv = cp.array([dv_tl, dv_tr, dv_bl, dv_br])
+    
+    dv_tl, dv_tr, dv_bl, dv_br = None, None, None, None
     
     # Calculate the dot product between each point's distance vectors and its cell's gradient vectors.
     # Format: [4, *shape_image]
     dots = dv[:, 0, :, :]*gv[:, 0, :, :] + dv[:, 1, :, :]*gv[:, 1, :, :]
+    
+    dv, gv = None, None
 
     # Interpolate between each point's dot products to define the image.
     # Format[shape_image]
-    interp_x_t = dots[0, ...] + smoothstep(points[1, ...]%1)*np.subtract(dots[1, ...], dots[0, ...])
-    interp_x_b = dots[2, ...] + smoothstep(points[1, ...]%1)*np.subtract(dots[3, ...], dots[2, ...])
-    image = interp_x_t + smoothstep(points[0, ...]%1)*np.subtract(interp_x_b, interp_x_t)
+    interp_x_t = dots[0, ...] + smoothstep(points[1, ...]%1)*cp.subtract(dots[1, ...], dots[0, ...])
+    interp_x_b = dots[2, ...] + smoothstep(points[1, ...]%1)*cp.subtract(dots[3, ...], dots[2, ...])
+    
+    dots = None
+    
+    interp_y = interp_x_t + smoothstep(points[0, ...]%1)*cp.subtract(interp_x_b, interp_x_t)
+    
+    points, interp_x_t, interp_x_b = None, None, None
+    
+    image = cp.asnumpy(interp_y)
+    
+    interp_y = None
+    
+    cp.get_default_memory_pool().free_all_blocks()
     
     return image
 
