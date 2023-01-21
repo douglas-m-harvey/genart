@@ -113,39 +113,40 @@ def perlin_noise(shape_grid, shape_image, seed = None, tile = (True, True), warp
 
 
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-if not os.path.exists(os.path.join(__location__, "perlin_params.yaml")):
-    shutil.copy(os.path.join(__location__, "perlin_params_template.yaml"), os.path.join(__location__, "perlin_params.yaml"))
+if __name__ == "__main__":
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("parameters", nargs = "?", default = "perlin_params", type = str,
-                    help = "YAML file with entries: grid_y, grid_x, image_y, image_x",)
-args = parser.parse_args()
-with open(os.path.join(__location__, args.parameters + ".yaml"), "r") as file:
-        params = yaml.safe_load(file)
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    if not os.path.exists(os.path.join(__location__, "perlin_params.yaml")):
+        shutil.copy(os.path.join(__location__, "perlin_params_template.yaml"), os.path.join(__location__, "perlin_params.yaml"))
 
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("parameters", nargs = "?", default = "perlin_params", type = str,
+                        help = "YAML file with entries: grid_y, grid_x, image_y, image_x",)
+    args = parser.parse_args()
+    with open(os.path.join(__location__, args.parameters + ".yaml"), "r") as file:
+            params = yaml.safe_load(file)
 
-shape_grid = np.array([params["grid_y"], params["grid_x"]])
-shape_image = np.array([params["image_y"], params["image_x"]])
 
-image = perlin_noise(shape_grid, shape_image)
+    shape_grid = np.array([params["grid_y"], params["grid_x"]])
+    shape_image = np.array([params["image_y"], params["image_x"]])
+
+    image = perlin_noise(shape_grid, shape_image)
 
 
+    fig, ax = plt.subplots(1, 1, tight_layout = True)
+    ax.imshow(image)
+    ax.axis("off")
+    plt.show()
 
-fig, ax = plt.subplots(1, 1, tight_layout = True)
-ax.imshow(image)
-ax.axis("off")
-plt.show()
-
-save_image = input("\nSave image? [y/n]: ").lower()
-if save_image in ["y", "yes"]:
-    home_path = os.path.expanduser("~")
-    directory_path = input("Save path: " + home_path + "\\")
-    full_path = os.path.join(home_path, directory_path)
-    if not os.path.exists(full_path): os.mkdir(full_path)
-    file_name = input("File name: ")
-    plt.imsave(os.path.join(full_path, file_name), image)
-elif save_image in ["n", "no", None]:
-    pass
+    save_image = input("\nSave image? [y/n]: ").lower()
+    if save_image in ["y", "yes"]:
+        home_path = os.path.expanduser("~")
+        directory_path = input("Save path: " + home_path + "\\")
+        full_path = os.path.join(home_path, directory_path)
+        if not os.path.exists(full_path): os.mkdir(full_path)
+        file_name = input("File name: ")
+        plt.imsave(os.path.join(full_path, file_name), image)
+    elif save_image in ["n", "no", None]:
+        pass
