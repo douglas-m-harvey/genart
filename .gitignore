@@ -1,4 +1,4 @@
-# Data folder
+# Data directory
 data/
 
 # Parameter files
@@ -14,8 +14,7 @@ poetry.lock
 *sketch.ipynb
 
 
-###
-
+## Template
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
