@@ -1,3 +1,8 @@
+genart/temp_frames/
+genart/tests/
+genart/*sketch.ipynb
+genart/test_audio.wav
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
