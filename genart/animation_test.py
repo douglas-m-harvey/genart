@@ -36,6 +36,7 @@ def voronoi(rng, shape, points = None, number_points = None, wrapped = False, re
 rng = np.random.default_rng(3)
 
 image_shape = (64, 128)
+display_shape = (512, 1024)
 alive_dead_ratio = 0.25
 frames_per_second = 60
 
@@ -67,19 +68,22 @@ init_array = rng.choice([0, 1], size = image_shape, p = [1 - alive_dead_ratio, a
 # plt.show()
 
 from scipy.signal import fftconvolve
+from skimage.transform import resize
 
 # Slowly building sum of automata
 array_automaton = init_array.copy()
 array_automaton_sum = array_automaton.astype(float)
-figure, axis = plt.subplots(1, 1, figsize = (8, 4), layout = "constrained")
+array_display = resize(array_automaton_sum, display_shape, order = 0)
+figure, axis = plt.subplots(1, 1, figsize = (display_shape[1]/96, display_shape[0]/96), layout = "constrained")
 axis.axis("off")
-image = axis.imshow(array_automaton_sum, vmin = 0, vmax = 1, cmap = "Greys", interpolation = "none")
+image = axis.imshow(array_display, vmin = 0, vmax = 1, cmap = "Greys_r", interpolation = "none")
 def animate(index):
     global array_automaton, array_automaton_sum
     array_automaton = cellular_automaton(array_automaton, rule)
     array_automaton_sum += array_automaton.astype(float)
-    image.set_array(array_automaton_sum)
-    image.set_clim(vmin = array_automaton_sum.min(), vmax = array_automaton_sum.max())
+    array_display = resize(array_automaton_sum, display_shape, order = 0)
+    image.set_array(array_display)
+    image.set_clim(vmin = array_display.min(), vmax = array_display.max())
     array_automaton_sum *= 0.5
     array_automaton_sum += 0.15*fftconvolve(array_automaton_sum, np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]]), mode = "same")
     return [image]
